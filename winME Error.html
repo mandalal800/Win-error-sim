@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>WIN ME errors</title>
+
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+    body { overflow: hidden; }
+    #container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://betawiki.net/images/thumb/c/c6/Windows-ME-4.90.3000-Desktop.png/435px-Windows-ME-4.90.3000-Desktop.png');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      cursor: pointer;
+      background-color: black;
+    }
+    #images-container {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+    }
+    .click-image {
+      position: absolute;
+      opacity: 0.25;
+      animation: fadeIn 0.02s linear forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="container">
+  <div id="images-container"></div>
+</div>
+
+<script>
+  var container = document.getElementById("container");
+  var imagesContainer = document.getElementById("images-container");
+  var isMouseDown = false;
+  var MAX_ICONS = 370;
+  var imagesList = [
+    "https://media.techeblog.com/images/funnyerror_1.jpg",
+    "http://toastytech.com/guis/mecrash.png",
+    "https://assets.techrepublic.com/uploads/2016/05/win-me-error.jpg",
+    "https://assets.techrepublic.com/uploads/2016/05/cannot-delete-samples.jpg",
+    "https://assets.techrepublic.com/uploads/2016/05/cannot-quit.jpg",
+    "https://assets.techrepublic.com/uploads/2016/05/unexpected-error.jpg"
+  ];
+  var imageIndex = 0;
+
+  function getImageSize(src, callback) {
+    var img = new Image();
+    img.onload = function() { callback(img.width, img.height); };
+    img.src = src;
+  }
+
+  function createErrorIcon(x, y) {
+    var rect = container.getBoundingClientRect();
+    var img = document.createElement("img");
+    var imageSrc = imagesList[imageIndex];
+    getImageSize(imageSrc, function(originalWidth, originalHeight) {
+      var maxSize = 200;
+      var newWidth = originalWidth;
+      var newHeight = originalHeight;
+      if (newWidth > maxSize || newHeight > maxSize) {
+        if (newWidth > newHeight) {
+          newWidth = maxSize;
+          newHeight = (originalHeight * maxSize) / originalWidth;
+        } else {
+          newHeight = maxSize;
+          newWidth = (originalWidth * maxSize) / originalHeight;
+        }
+      }
+      img.src = imageSrc;
+      img.className = "click-image";
+      var offsetX = newWidth / 2;
+      var offsetY = newHeight / 2;
+      img.style.left = (x - rect.left - offsetX) + "px";
+      img.style.top = (y - rect.top - offsetY) + "px";
+      img.style.width = newWidth + "px";
+      img.style.height = newHeight + "px";
+      img.draggable = false;
+      if (imagesContainer.childNodes.length >= MAX_ICONS) imagesContainer.removeChild(imagesContainer.firstChild);
+      imagesContainer.appendChild(img);
+    });
+    imageIndex = (imageIndex + 1) % imagesList.length;
+  }
+
+  function isClickInsideBackground(x, y) {
+    var rect = container.getBoundingClientRect();
+    var imageAspectRatio = 1920 / 1080;
+    var containerAspectRatio = rect.width / rect.height;
+    var bgWidth, bgHeight;
+    if (containerAspectRatio > imageAspectRatio) {
+      bgWidth = rect.width;
+      bgHeight = rect.width / imageAspectRatio;
+    } else {
+      bgHeight = rect.height;
+      bgWidth = rect.height * imageAspectRatio;
+    }
+    var bgLeft = rect.left + (rect.width - bgWidth) / 2;
+    var bgTop = rect.top + (rect.height - bgHeight) / 2;
+    var bgRight = bgLeft + bgWidth;
+    var bgBottom = bgTop + bgHeight;
+    return x >= bgLeft && x <= bgRight && y >= bgTop && y <= bgBottom;
+  }
+
+  container.onclick = function(e) {
+    if (isClickInsideBackground(e.clientX, e.clientY)) createErrorIcon(e.clientX, e.clientY);
+  };
+  container.onmousedown = function(e) {
+    isMouseDown = true;
+    if (isClickInsideBackground(e.clientX, e.clientY)) createErrorIcon(e.clientX, e.clientY);
+    return false;
+  };
+  document.onmouseup = function() { isMouseDown = false; };
+  container.onmousemove = function(e) {
+    if (isMouseDown && isClickInsideBackground(e.clientX, e.clientY)) createErrorIcon(e.clientX, e.clientY);
+  };
+  container.ontouchstart = function(e) {
+    isMouseDown = true;
+    var t = e.touches[0];
+    if (isClickInsideBackground(t.clientX, t.clientY)) createErrorIcon(t.clientX, t.clientY);
+    return false;
+  };
+  container.ontouchmove = function(e) {
+    if (isMouseDown) {
+      var t = e.touches[0];
+      if (isClickInsideBackground(t.clientX, t.clientY)) createErrorIcon(t.clientX, t.clientY);
+    }
+    return false;
+  };
+  container.ontouchend = function() { isMouseDown = false; };
+</script>
+
+</body>
+</html>
